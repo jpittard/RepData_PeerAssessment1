@@ -13,9 +13,17 @@ Data
 The data for this assignment can be downloaded from the course web site as a 
 zipped .csv.
 
-```{r readData}
+
+```r
 fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 date()
+```
+
+```
+## [1] "Sun Aug 17 13:45:55 2014"
+```
+
+```r
 download.file(fileUrl, destfile = "repdata_data_activity.zip", method = "curl")
 unzip("repdata_data_activity.zip")
 file <- list.files(pattern="*.csv")
@@ -27,11 +35,36 @@ The variables included in this dataset are:
 - **date**: The date on which the measurement was taken in YYYY-MM-DD format
 - **interval**: Identifier for the 5-minute interval in which measurement was taken
 
-There are a total of `r nrow(data)` observations in this dataset.
+There are a total of 17568 observations in this dataset.
 
-```{r summary}
+
+```r
 head(data)
+```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
+```
+
+```r
 summary(data)
+```
+
+```
+##      steps               date          interval   
+##  Min.   :  0.0   2012-10-01:  288   Min.   :   0  
+##  1st Qu.:  0.0   2012-10-02:  288   1st Qu.: 589  
+##  Median :  0.0   2012-10-03:  288   Median :1178  
+##  Mean   : 37.4   2012-10-04:  288   Mean   :1178  
+##  3rd Qu.: 12.0   2012-10-05:  288   3rd Qu.:1766  
+##  Max.   :806.0   2012-10-06:  288   Max.   :2355  
+##  NA's   :2304    (Other)   :15840
 ```
 
 Mean total number of steps per day
@@ -40,20 +73,33 @@ Mean total number of steps per day
 Ignoring the missing values, we can look at the frequency distribution of the 
 number of steps taken each day:
 
-```{r stepsPerDay, fig.width=6, fig.height=6}
+
+```r
 stepsPerDay <- aggregate(data$steps, by=list(Date=data$date), FUN=sum, na.rm=T)
 hist(stepsPerDay$x, xlab="Steps/Day", main="", breaks=10)
 ```
 
+![plot of chunk stepsPerDay](figure/stepsPerDay.png) 
+
 The mean is 
-```{r meanStepsPerDay}
+
+```r
 meanStepsPerDay <- mean(stepsPerDay$x, na.rm=TRUE)
 meanStepsPerDay
 ```
+
+```
+## [1] 9354
+```
 and the median is 
-```{r medianStepsPerDay}
+
+```r
 medianStepsPerDay <- median(stepsPerDay$x, na.rm=TRUE)
 medianStepsPerDay
+```
+
+```
+## [1] 10395
 ```
 
 
@@ -62,7 +108,8 @@ Average daily activity pattern
 
 Still ignoring missing values, let's look at a time-series plot of the 5-minute intervals and average number of steps taken, averaged across all days:
 
-```{r dailyActivity1, fig.width=8, fig.height=5}
+
+```r
 avgByInterval <- aggregate(data$steps, by=list(data$interval), FUN=mean, na.rm=T)
 colnames(avgByInterval) <- c("interval", "avgSteps")
 
@@ -74,22 +121,37 @@ xyplot(avgSteps~interval, data=avgByInterval,
       		labels=c("00","04","08","12","16","20","24") )
     	)
        )
+```
+
+![plot of chunk dailyActivity1](figure/dailyActivity1.png) 
+
+```r
 maxAvg <- max(avgByInterval$avgSteps)
 ```
-The maximum (`maxAvg`) of `r maxAvg` occurs during the five-minute interval 
+The maximum (`maxAvg`) of 206.1698 occurs during the five-minute interval 
 beginning at the following time:
-```{r}
+
+```r
 format(strptime(
 	sprintf("%04d", avgByInterval[(avgByInterval$avgSteps==maxAvg),"interval"]), 
 	"%H%M"), "%H:%M")
+```
+
+```
+## [1] "08:35"
 ```
 
 Imputing Missing Values
 -------------------------------------------------------
 
 The number of intervals with missing values is given by 
-```{r numberOfMissingValues}
+
+```r
 nrow(data[is.na(data$steps),]) 
+```
+
+```
+## [1] 2304
 ```
 
 Missing values may introduce bias into some calculations or summaries of the 
@@ -97,28 +159,42 @@ data. Therefore, for each of the missing values, we will substitute the mean
 for that 5-minute interval by merging the average values per interval
 into the dataset.
 
-```{r createImputed}
+
+```r
 imputed <- merge(data, avgByInterval, by="interval")
 imputed$steps[is.na(imputed$steps)] <- imputed[is.na(imputed$steps),"avgSteps"]
 ```
 
-```{r stepsPerDayImputed, fig.width=6, fig.height=6}
+
+```r
 stepsPerDayImputed <- aggregate(imputed$steps, by=list(imputed$date), FUN=sum, na.rm=T)
 hist(stepsPerDayImputed$x, xlab="Steps/Day", main="", breaks=10)
 ```
 
+![plot of chunk stepsPerDayImputed](figure/stepsPerDayImputed.png) 
+
 The new mean is 
-```{r stepsPerDayImputedMean}
+
+```r
 meanStepsPerDayImputed <- mean(stepsPerDayImputed$x)
 meanStepsPerDayImputed
 ```
-which is `r meanStepsPerDayImputed/meanStepsPerDay` times the mean 
+
+```
+## [1] 10766
+```
+which is 1.1509 times the mean 
 without imputed averages, and the new median is 
-```{r stepsPerDayImputedMedian}
+
+```r
 medianStepsPerDayImputed <- median(stepsPerDayImputed$x)
 medianStepsPerDayImputed
 ```
-which is `r medianStepsPerDayImputed/medianStepsPerDay` times the median 
+
+```
+## [1] 10766
+```
+which is 1.0357 times the median 
 without imputed averages.
 
 The imputation of values shifts the overall values slightly upward.
@@ -132,7 +208,8 @@ we can see that on weekdays there is a period of strenous excercise around
 the morning excercise is less intense, but the amount of activity through the 
 day is greater.
 
-```{r weekendPatterns, fig.width=8, fig.height=10}
+
+```r
 ## Mark each day as weekday or weekend
 imputed$daytype <- "weekday"
 imputed[weekdays(as.Date(imputed$date)) %in% c("Saturday","Sunday"), "daytype"] <- "weekend"
@@ -148,4 +225,6 @@ xyplot(avgSteps~interval|daytype, data=daytypeAvg,
     	)
 )
 ```
+
+![plot of chunk weekendPatterns](figure/weekendPatterns.png) 
 
